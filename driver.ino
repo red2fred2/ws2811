@@ -2,9 +2,12 @@
 #define PORT PORTB
 #define PORT_PIN PORTB0
 
-byte patternLength = 1;
-byte pattern[1][3] = {
- {20,20,20}
+byte patternLength = 4;
+byte pattern[4][3] = {
+ {10,10,10},
+ {10,0,0},
+ {0,10,0},
+ {0,0,10}
 };
 
 byte stripLength = 150;
@@ -70,13 +73,24 @@ void fillPattern(byte pattern[][3], byte length) {
     strip[i][2] = pattern[i % length][2];
   }
 }
+void startArray(byte pattern[][3], byte length) {
+  for(byte i = 0; i < length; i++) {
+    strip[i][0] = pattern[i][0];
+    strip[i][1] = pattern[i][1];
+    strip[i][2] = pattern[i][2];
+  }
+}
+
+void shiftArray() {
+  for(byte i = stripLength; i >= 0; i--) {
+    //Serial.println(i);
+  }
+}
 
 void sendFrame(byte values[][3], byte length) {
-
   for(int i = 0; i < length; i++) {
     sendRGB(values[i][0], values[i][1], values[i][2]);
   }
-  
   delay(1);
 }
 
@@ -87,6 +101,8 @@ void setup() {
 }
 
 void loop() {
-  fillPattern(pattern, patternLength);
-  sendFrame(strip, stripLength);
+  startArray(pattern, patternLength);
+  shiftArray();
+  //sendFrame(strip, stripLength);
+  Serial.println(stripLength);
 }
