@@ -82,7 +82,7 @@ void fillPattern(byte pattern[][3], byte length, int from, int to) {
   for(byte i = from; i < to; i++) {
 
     int position = i % length - from % length;
-    if(position < 0) position = length - 1;
+    if(position < 0) position += length;
     strip[i][0] = pattern[position][0];
     strip[i][1] = pattern[position][1];
     strip[i][2] = pattern[position][2];
@@ -98,12 +98,43 @@ void setup() {
 byte patternLength = 3;
 byte pattern[3][3] = {
  {20, 0, 0},
- {0, 20, 0},
+ {20, 20, 20},
  {0, 0, 20}
 };
 
+byte mericaLength = 4;
+byte mericaDelay = 0;
+
+byte merica1[4][3] = {
+  {20, 0, 0},
+  {0, 20, 0},
+  {0, 0, 20},
+  {0, 0, 0}
+};
+byte merica2[4][3] = {
+  {0, 0, 20},
+  {0, 0, 0},
+  {20, 0, 0},
+  {0, 20, 0}
+};
+byte merica3[4][3] = {
+  {0, 20, 0},
+  {0, 0, 20},
+  {0, 0, 0},
+  {20, 0, 0}
+};
+
 void loop() {
-  fillPattern(pattern, patternLength, 100, 150);
-  fillPattern(pattern, patternLength, 0, 50);
+  fillPattern(merica1, mericaLength, 0, 75);
+  fillPattern(merica3, mericaLength, 75, 150);
   sendFrame(strip, stripLength);
+  delay(mericaDelay);
+  fillPattern(merica2, mericaLength, 0, 75);
+  fillPattern(merica2, mericaLength, 75, 150);
+  sendFrame(strip, stripLength);
+  delay(mericaDelay);
+  fillPattern(merica3, mericaLength, 0, 75);
+  fillPattern(merica1, mericaLength, 75, 150);
+  sendFrame(strip, stripLength);
+  delay(mericaDelay);
 }
