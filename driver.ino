@@ -78,11 +78,14 @@ void sendFrame(byte values[][3], byte length) {
 }
 
 //repeat a pattern to fill the strip[150][3] variable
-void fillPattern(byte pattern[][3], byte length) {
-  for(byte i = 0; i < stripLength; i++) {
-    strip[i][0] = pattern[i % length][0];
-    strip[i][1] = pattern[i % length][1];
-    strip[i][2] = pattern[i % length][2];
+void fillPattern(byte pattern[][3], byte length, int from, int to) {
+  for(byte i = from; i < to; i++) {
+
+    int position = i % length - from % length;
+    if(position < 0) position = length - 1;
+    strip[i][0] = pattern[position][0];
+    strip[i][1] = pattern[position][1];
+    strip[i][2] = pattern[position][2];
   }
 }
 
@@ -94,12 +97,13 @@ void setup() {
 
 byte patternLength = 3;
 byte pattern[3][3] = {
- {0, 25, 0},
- {25, 0, 25},
- {0, 25, 25}
+ {20, 0, 0},
+ {0, 20, 0},
+ {0, 0, 20}
 };
 
 void loop() {
-  fillPattern(pattern, patternLength);
+  fillPattern(pattern, patternLength, 100, 150);
+  fillPattern(pattern, patternLength, 0, 50);
   sendFrame(strip, stripLength);
 }
