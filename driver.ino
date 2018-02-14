@@ -2,12 +2,19 @@
 #define PORT PORTB
 #define PORT_PIN PORTB0
 
-byte stripLength = 150;
-byte strip[150][3];
+void setup() {
+  pinMode(DIGITAL_PIN, OUTPUT);
+  digitalWrite(DIGITAL_PIN, 0);
+  Serial.begin(9600);
+}
 
-//send 0 bit (takes 1 usec plus overhead)
+byte stripLength = 150;
+byte frame[150][3];
+
+byte frames = 2;
+byte animation[2][150][3];
+
 void send0(void) {
-  //do AVR assemby
   asm volatile(
     //set pin high
     "sbi %0,%1\n\t"
@@ -17,16 +24,13 @@ void send0(void) {
     "cbi %0,%1\n\t"
     //wait 12 cycles (3/4 usec)
     "rjmp .+0\n\trjmp .+0\n\trjmp .+0\n\trjmp .+0\n\trjmp .+0\n\trjmp .+0\n\t"
-    
     ::
     "I" (_SFR_IO_ADDR(PORT)),
     "I" (PORT_PIN)
   );
 }
 
-//send 1 bit (1 usec)
 void send1(void) {
-  //do AVR assemby
   asm volatile(
     //set pin high
     "sbi %0,%1\n\t"
@@ -36,14 +40,12 @@ void send1(void) {
     "cbi %0,%1\n\t"
     //wait 5 cycles (5/16 usec)
     "rjmp .+0\n\trjmp .+0\n\tnop\n\t"
-    
     ::
     "I" (_SFR_IO_ADDR(PORT)),
     "I" (PORT_PIN)
   );
 }
 
-//send a byte (8 usec)
 void sendByte(byte value) {
   //disable cpu interrupts
   cli();
@@ -57,17 +59,11 @@ void sendByte(byte value) {
   sei();
 }
 
-//send an RGB color to a light (24 usec)
-void sendRGB(byte r, byte g, byte b) {
-  sendByte(g);
-  sendByte(r);
-  sendByte(b);
-}
-
-//send information for one frame of an animation (150 x 24 + 50 usec)
-void sendFrame(byte values[][3], byte length) {
-  for(int i = 0; i < length; i++) {
-    sendRGB(values[i][0], values[i][1], values[i][2]);
+void sendFrame() {
+  for(int i = 0; i < stripLength; i++) {
+    sendByte(frame[i][1]);
+    sendByte(frame[i][0]);
+    sendByte(frame[i][2]);
   }
   
   //delay 50 usec
@@ -77,64 +73,168 @@ void sendFrame(byte values[][3], byte length) {
   while(time < 50);
 }
 
-//repeat a pattern to fill the strip[150][3] variable
 void fillPattern(byte pattern[][3], byte length, int from, int to) {
   for(byte i = from; i < to; i++) {
 
     int position = i % length - from % length;
     if(position < 0) position += length;
-    strip[i][0] = pattern[position][0];
-    strip[i][1] = pattern[position][1];
-    strip[i][2] = pattern[position][2];
+    frame[i][0] = pattern[position][0];
+    frame[i][1] = pattern[position][1];
+    frame[i][2] = pattern[position][2];
   }
 }
 
-void setup() {
-  pinMode(DIGITAL_PIN, OUTPUT);
-  digitalWrite(DIGITAL_PIN, 0);
-  Serial.begin(9600);
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-byte patternLength = 3;
-byte pattern[3][3] = {
- {20, 0, 0},
- {20, 20, 20},
- {0, 0, 20}
-};
+byte Length = 1;
+int Delay = 10;
 
-byte mericaLength = 4;
-byte mericaDelay = 0;
-
-byte merica1[4][3] = {
-  {20, 0, 0},
-  {0, 20, 0},
-  {0, 0, 20},
+//red pulse
+byte red1[1][3] = {
   {0, 0, 0}
 };
-byte merica2[4][3] = {
-  {0, 0, 20},
-  {0, 0, 0},
-  {20, 0, 0},
-  {0, 20, 0}
+byte red2[1][3] = {
+  {25, 0, 0}
 };
-byte merica3[4][3] = {
-  {0, 20, 0},
-  {0, 0, 20},
-  {0, 0, 0},
-  {20, 0, 0}
+byte red3[1][3] = {
+  {50, 0, 0}
+};
+byte red4[1][3] = {
+  {75, 0, 0}
+};
+byte red5[1][3] = {
+  {100, 0, 0}
 };
 
+//green pulse
+
+byte green1[1][3] = {
+  {0, 0, 0}
+};
+byte green2[1][3] = {
+  {0, 25, 0}
+};
+byte green3[1][3] = {
+  {0, 50, 0}
+};
+byte green4[1][3] = {
+  {0, 75, 0}
+};
+byte green5[1][3] = {
+  {0, 100, 0}
+};
+
+//blue pulse
+byte blue1[1][3] = {
+  {25, 0, 25}
+};
+byte blue2[1][3] = {
+  {25, 0, 0}
+};
+byte blue3[1][3] = {
+  {25, 25, 0}
+};
+byte blue4[1][3] = {
+  {0, 25, 0}
+};
+byte blue5[1][3] = {
+  {0, 0, 25}
+};
+
+//r top chaser
+byte rgbLength = 5;
+
+byte rc1[5][3] = {
+  {25, 0, 0},
+  {50, 0, 0},
+  {25, 0, 0},
+  {0, 0, 0},
+  {0, 0, 0}
+};
+
+byte rc2[5][3] = {
+  {0, 0, 0},
+  {25, 0, 0},
+  {50, 0, 0},
+  {25, 0, 0},
+  {0, 0, 0}
+};
+byte rc3[5][3] = {
+  {0, 0, 0},
+  {0, 0, 0},
+  {25, 0, 0},
+  {50, 0, 0},
+  {25, 0, 0}
+};
+byte rc4[5][3] = {
+  {25, 0, 0},
+  {0, 0, 0},
+  {0, 0, 0},
+  {25, 0, 0},
+  {50, 0, 0}
+};
+byte rc5[5][3] = {
+  {50, 0, 0},
+  {25, 0, 0},
+  {0, 0, 0},
+  {0, 0, 0},
+  {25, 0, 0},
+  
+};
+
+byte left = 60;
+byte right = 88;
+
 void loop() {
-  fillPattern(merica1, mericaLength, 0, 75);
-  fillPattern(merica3, mericaLength, 75, 150);
-  sendFrame(strip, stripLength);
-  delay(mericaDelay);
-  fillPattern(merica2, mericaLength, 0, 75);
-  fillPattern(merica2, mericaLength, 75, 150);
-  sendFrame(strip, stripLength);
-  delay(mericaDelay);
-  fillPattern(merica3, mericaLength, 0, 75);
-  fillPattern(merica1, mericaLength, 75, 150);
-  sendFrame(strip, stripLength);
-  delay(mericaDelay);
+  
+  fillPattern(red1, Length, 0, left);
+  fillPattern(rc1, rgbLength, left, right);
+  fillPattern(blue1, Length, right, 150);
+  sendFrame();
+  delay(Delay);
+  fillPattern(red2, Length, 0, left);
+  fillPattern(rc2, rgbLength, left, right);
+  fillPattern(blue2, Length, right, 150);
+  sendFrame();
+  delay(Delay);
+  fillPattern(red3, Length, 0, left);
+  fillPattern(rc3, rgbLength, left, right);
+  fillPattern(blue3, Length, right, 150);
+  sendFrame();
+  delay(Delay);
+  fillPattern(red4, Length, 0, left);
+  fillPattern(rc4, rgbLength, left, right);
+  fillPattern(blue4, Length, right, 150);
+  sendFrame();
+  delay(Delay);
+  fillPattern(red5, Length, 0, left);
+  fillPattern(rc5, rgbLength, left, right);
+  fillPattern(blue5, Length, right, 150);
+  sendFrame();
+  delay(Delay);
+  fillPattern(red5, Length, 0, left);
+  fillPattern(rc5, rgbLength, left, right);
+  fillPattern(blue5, Length, right, 150);
+  sendFrame();
+  delay(Delay);
+  fillPattern(red4, Length, 0, left);
+  fillPattern(rc4, rgbLength, left, right);
+  fillPattern(blue4, Length, right, 150);
+  sendFrame();
+  delay(Delay);
+  fillPattern(red3, Length, 0, left);
+  fillPattern(rc3, rgbLength, left, right);
+  fillPattern(blue3, Length, right, 150);
+  sendFrame();
+  delay(Delay);
+  fillPattern(red2, Length, 0, left);
+  fillPattern(rc2, rgbLength, left, right);
+  fillPattern(blue2, Length, right, 150);
+  sendFrame();
+  delay(Delay);
+  fillPattern(red1, Length, 0, left);
+  fillPattern(rc1, rgbLength, left, right);
+  fillPattern(blue1, Length, right, 150);
+  sendFrame();
+  delay(Delay);
 }
