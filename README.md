@@ -38,3 +38,6 @@ This dimension is color, holding each individual color value
 const byte chaser[2][5][5][3] = {
                           ---
 ```
+
+## Events
+You might have to clobber anything that changes the 'e' variable. The lights were supposed to change with I2C input.
